@@ -1,0 +1,79 @@
+// Vivek
+
+import java.sql.*;
+
+public class Toll {
+
+    public static void main(String[] args) {
+        String url = "jdbc:derby://localhost:1527/Collection_of_Toll";
+        String username = "root";
+        String password = "root";
+
+        try {
+            Connection connection = DriverManager.getConnection(url, username, password);
+            Statement statement = connection.createStatement();
+
+            // Create a table to store toll transactions if not exists
+            String createTableQuery = "CREATE TABLE toll_transactions (vehicle_type VARCHAR(10), toll_amount INT)";
+            statement.executeUpdate(createTableQuery);
+
+            // Insert random data for toll transactions
+            // For the purpose of demonstration, I'm assuming random data for vehicles passing through
+            // You can replace this with actual data collection mechanism
+            int totalVehicles = 100; // Random number of vehicles greater than 10
+            int cars = 0, bikes = 0, buses = 0;
+            int totalTollCollected = 0;
+
+            for (int i = 0; i < totalVehicles; i++) {
+                int randomVehicleType = (int) (Math.random() * 3); // 0: Car, 1: Bike, 2: Bus
+                int tollAmount;
+                String vehicleType;
+
+                switch (randomVehicleType) {
+                    case 0:
+                        tollAmount = 250;
+                        vehicleType = "Car";
+                        cars++;
+                        break;
+                    case 1:
+                        tollAmount = 200;
+                        vehicleType = "Bike";
+                        bikes++;
+                        break;
+                    case 2:
+                        tollAmount = 500;
+                        vehicleType = "Bus";
+                        buses++;
+                        break;
+                    default:
+                        tollAmount = 0;
+                        vehicleType = "Unknown";
+                }
+
+                totalTollCollected += tollAmount;
+
+                // Inserting transaction data into the database
+                String insertQuery = "INSERT INTO toll_transactions (vehicle_type, toll_amount) VALUES (?, ?)";
+                PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
+                preparedStatement.setString(1, vehicleType);
+                preparedStatement.setInt(2, tollAmount);
+                preparedStatement.executeUpdate();
+            }
+
+            // Calculate toll for returning vehicles
+            int totalReturningToll = totalTollCollected * 10 / 100; // Assuming 10% return toll
+
+            // Print results
+            System.out.println("Total Vehicles: " + totalVehicles);
+            System.out.println("Cars: " + cars);
+            System.out.println("Bikes: " + bikes);
+            System.out.println("Buses: " + buses);
+            System.out.println("Total Toll Collected: " + totalTollCollected + " rs");
+            System.out.println("Total Toll for Returning Vehicles: " + totalReturningToll + " rs");
+
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}

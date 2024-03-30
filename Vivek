@@ -1,11 +1,10 @@
-// Vivek
-
 import java.sql.*;
+import java.util.Random;
 
 public class Toll {
 
     public static void main(String[] args) {
-        String url = "jdbc:derby://localhost:1527/Collection_of_Toll";
+        String url = "jdbc:derby://localhost:1527/collection";
         String username = "root";
         String password = "root";
 
@@ -13,14 +12,19 @@ public class Toll {
             Connection connection = DriverManager.getConnection(url, username, password);
             Statement statement = connection.createStatement();
 
-            // Create a table to store toll transactions if not exists
+            DatabaseMetaData dm = connection.getMetaData();
+            ResultSet rs = dm.getTables(null, null, "TOLL_DATA", null);
+
+            // Create tables to store toll transactions and returning vehicles if not exists
             String createTableQuery = "CREATE TABLE toll_transactions (vehicle_type VARCHAR(10), toll_amount INT)";
             statement.executeUpdate(createTableQuery);
+            String createReturningTableQuery = "CREATE TABLE returning_vehicles (vehicle_type VARCHAR(10), count INT)";
+            statement.executeUpdate(createReturningTableQuery);
 
             // Insert random data for toll transactions
-            // For the purpose of demonstration, I'm assuming random data for vehicles passing through
-            // You can replace this with actual data collection mechanism
-            int totalVehicles = 100; // Random number of vehicles greater than 10
+            Random rand = new Random();
+           
+            int totalVehicles = rand.nextInt(1000); // Random number of vehicles greater than 10
             int cars = 0, bikes = 0, buses = 0;
             int totalTollCollected = 0;
 
@@ -69,11 +73,43 @@ public class Toll {
             System.out.println("Bikes: " + bikes);
             System.out.println("Buses: " + buses);
             System.out.println("Total Toll Collected: " + totalTollCollected + " rs");
-            System.out.println("Total Toll for Returning Vehicles: " + totalReturningToll + " rs");
+
+            // Simulating returning vehicles
+            System.out.println("\nSimulating returning vehicles:");
+
+            int returningCars = cars / 2; // Assuming half of the cars are returning
+            int returningBikes = bikes / 3; // Assuming one-third of the bikes are returning
+            int returningBuses = buses / 4; // Assuming one-fourth of the buses are returning
+
+            System.out.println("Returning Cars: " + returningCars);
+            System.out.println("Returning Bikes: " + returningBikes);
+            System.out.println("Returning Buses: " + returningBuses);
+
+            // Insert returning vehicle data into the returning vehicles table
+            String insertReturningCarsQuery = "INSERT INTO returning_vehicles (vehicle_type, count) VALUES (?, ?)";
+            PreparedStatement returningCarsStatement = connection.prepareStatement(insertReturningCarsQuery);
+            returningCarsStatement.setString(1, "Car");
+            returningCarsStatement.setInt(2, returningCars);
+            returningCarsStatement.executeUpdate();
+
+            String insertReturningBikesQuery = "INSERT INTO returning_vehicles (vehicle_type, count) VALUES (?, ?)";
+            PreparedStatement returningBikesStatement = connection.prepareStatement(insertReturningBikesQuery);
+            returningBikesStatement.setString(1, "Bike");
+            returningBikesStatement.setInt(2, returningBikes);
+            returningBikesStatement.executeUpdate();
+
+            String insertReturningBusesQuery = "INSERT INTO returning_vehicles (vehicle_type, count) VALUES (?, ?)";
+            PreparedStatement returningBusesStatement = connection.prepareStatement(insertReturningBusesQuery);
+            returningBusesStatement.setString(1, "Bus");
+            returningBusesStatement.setInt(2, returningBuses);
+            returningBusesStatement.executeUpdate();
 
             connection.close();
+            System.out.println("Total Toll for Returning Vehicles: " + totalReturningToll + " rs");
+
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Table Already exist");
         }
     }
 }

@@ -1,0 +1,101 @@
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+
+public class TollBridge {
+    static final String URL = "jdbc:derby://localhost:1527/toll";
+    static final String username = "root";
+    static final String password = "root";
+
+    public static void main(String[] args) {
+        // Establishing JDBC Connection
+        try (Connection connection = DriverManager.getConnection(URL, username, password)) {
+            if (connection != null) {
+                System.out.println("Connected to the database.");
+
+                // Create the toll_data table if it doesn't exist
+                createTollDataTable(connection);
+
+                // Simulate toll bridge activity and insert data into the database
+                simulateTollActivity(connection);
+            }
+        } catch (SQLException e) {
+            System.out.println("Connection failed.");
+            e.printStackTrace();
+        }
+    }
+
+    // Method to create the toll_data table if it doesn't exist
+    private static void createTollDataTable(Connection connection) throws SQLException {
+        DatabaseMetaData metaData = connection.getMetaData();
+        ResultSet resultSet = metaData.getTables(null, null, "TOLL_DATA", null);
+
+        if (!resultSet.next()) {
+            String createTableSQL = "CREATE TABLE toll_data ("
+                    + "vehicle_type VARCHAR(20),"
+                    + "toll_amount INT"
+                    + ")";
+            try (PreparedStatement createTableStatement = connection.prepareStatement(createTableSQL)) {
+                createTableStatement.execute();
+            }
+        } else {
+            System.out.println("Table 'TOLL_DATA' already exists.");
+        }
+    }
+
+    // Method to simulate toll bridge activity and insert data into the database
+    private static void simulateTollActivity(Connection connection) throws SQLException {
+        HashMap<String, Integer> vehicleCounts = new HashMap<>();
+        vehicleCounts.put("car", 0);
+        vehicleCounts.put("bus", 0);
+        vehicleCounts.put("truck", 0);
+        vehicleCounts.put("auto", 0);
+
+        int totalTollCollected = 0;
+        int totalVehicles = 1000; // Assuming 1000 vehicles go through the toll bridge
+
+        // Simulating vehicles passing through the toll bridge and inserting data into database
+        for (int i = 0; i < totalVehicles; i++) {
+            String vehicleType = getRandomVehicleType();
+            int toll = getToll(vehicleType);
+            totalTollCollected += toll;
+            vehicleCounts.put(vehicleType, vehicleCounts.get(vehicleType) + 1);
+
+            // Inserting data into toll_data table
+            String insertDataSQL = "INSERT INTO toll_data (vehicle_type, toll_amount) VALUES (?, ?)";
+            try (PreparedStatement insertStatement = connection.prepareStatement(insertDataSQL)) {
+                insertStatement.setString(1, vehicleType);
+                insertStatement.setInt(2, toll);
+                insertStatement.executeUpdate();
+            }
+        }
+
+        // Displaying the results
+        System.out.println("Total vehicles passed through toll bridge: " + totalVehicles);
+        System.out.println("Total toll collected: " + totalTollCollected);
+        System.out.println("Vehicle counts:");
+        for (String vehicleType : vehicleCounts.keySet()) {
+            System.out.println(vehicleType + ": " + vehicleCounts.get(vehicleType));
+        }
+    }
+
+    // Method to simulate random vehicle type
+    private static String getRandomVehicleType() {
+        String[] vehicleTypes = {"car", "bus", "truck", "auto"};
+        int randomIndex = (int) (Math.random() * vehicleTypes.length);
+        return vehicleTypes[randomIndex];
+    }
+
+    // Method to get toll based on vehicle type
+    private static int getToll(String vehicleType) {
+        if (vehicleType.equals("car")) {
+            return 200;
+        } else {
+            return 400; // Assuming all other vehicle types pay 400 rupees
+        }
+    }
+}
